@@ -1,0 +1,51 @@
+#!/usr/bin/env perl
+use strict;
+use File::Basename;
+use File::Find;
+use File::Spec;
+
+# Purpose: check that every .go file has a test and that it works.
+
+my (%test_in_dir, $test_found);
+
+sub wanted {
+    my $f = $File::Find::name;
+    $f =~ s{^./}{};
+    my $path = $f;
+    $path =~ s{/[^/]*$}{};
+
+    if ($f =~ m{_test.go$}) {
+        $test_in_dir{$path} = 1;
+        $test_found = 1;
+        return;
+    }
+    if ($f =~ m{.go$}) {
+        $test_in_dir{$path} = 0 unless ($test_in_dir{$path});
+        return;
+    }
+}
+
+find({
+    wanted => \&wanted,
+    no_chdir => 1,
+},  '.');
+
+for my $dir (sort(keys(%test_in_dir))) {
+    if (!$test_in_dir{$dir}) {
+        warn("gotests: $dir contains no tests, you should add them\n");
+    }
+}
+if ($test_found) {
+    print("gotests: running all tests\n");
+    open(my $if, "go test ./... |") or die("cannot start `go test`\n");
+    my @lines;
+    while (my $line = <$if>) {
+        push(@lines, "    $line");
+    }
+    if (! close($if)) {
+        for my $l (@lines) {
+            print($l);
+        }
+        die("go test(s) failed\n");
+    }
+}
