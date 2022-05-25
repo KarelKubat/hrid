@@ -26,7 +26,8 @@ var (
 	ignoreCaseFlag = flag.Bool("ignorecase", id.IgnoreCase, "when true, casing is ignored when converting IDs to numbers")
 	groupsizeFlag  = flag.Int("groupsize", id.GroupSize, "size of space-delimited groups in generated IDs, for better readability")
 
-	idFlag = flag.Bool("id", false, "when true, arguments are taken as IDs, default: numbers")
+	idFlag      = flag.Bool("id", false, "when true, arguments are taken as IDs, default: numbers")
+	verboseFlag = flag.Bool("verbose", false, "show options with which the converter is instantiated")
 )
 
 func main() {
@@ -35,14 +36,18 @@ func main() {
 		fmt.Fprint(os.Stderr, usage)
 		os.Exit(1)
 	}
-	idConverter, err := id.New(&id.Opts{
+	opts := &id.Opts{
 		Tokens:     *tokensFlag,
 		StringLen:  *lenFlag,
 		IgnoreCase: *ignoreCaseFlag,
 		GroupSize:  *groupsizeFlag,
-	})
+	}
+	idConverter, err := id.New(opts)
 	if err != nil {
 		log.Fatal(err)
+	}
+	if *verboseFlag {
+		log.Printf("Converter options: %+v", *opts)
 	}
 	for _, a := range flag.Args() {
 		if *idFlag {

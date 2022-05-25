@@ -10,9 +10,9 @@ import (
 
 const (
 	// Tokens are the default runes from which IDs may be constructed.
-	Tokens = "0123456789ABCDEFGHKLMNPQRSTUVWXYZ"
+	Tokens = "0123456789ABCDEFGHKLMNPQRSTUVWXY"
 	// StringLen defines the default padding for ID generation.
-	StringLen = 20
+	StringLen = 14
 	// IgnoreCase defines whether ID to number conversions care about casing.
 	IgnoreCase = true
 	// GroupSize defines the length of groups in generated IDs, for better readability.
@@ -27,11 +27,13 @@ type Opts struct {
 	GroupSize  int    // When non-zero, an ID will be split into space-delimited groups for readability (e.g. "0123 4567").
 }
 
+// ID is the receiver that implements conversions.
 type ID struct {
 	opts      *Opts
 	converter *conv.Conv
 }
 
+// New instantiates a converter.
 func New(o *Opts) (*ID, error) {
 	if o.IgnoreCase {
 		o.Tokens = strings.ToUpper(o.Tokens)
@@ -46,25 +48,39 @@ func New(o *Opts) (*ID, error) {
 	}, nil
 }
 
-func (id *ID) ToString(n uint64) string {
-	out := id.converter.ToString(n)
+// ToRunes converts a uint64 to a slice of runes.
+func (id *ID) ToRunes(n uint64) []rune {
+	out := id.converter.ToRunes(n)
+
+	// Prepend the first alphabet rune until the desired length is reached.
 	for len(out) < id.opts.StringLen {
-		out = id.opts.Tokens[0:1] + out
+		out = append([]rune{id.converter.FirstRune()}, out...)
 	}
+
+	// Split into groups if requested.
 	if id.opts.GroupSize > 0 {
-		formatted := ""
+		formatted := []rune{}
 		for i := 0; i < len(out); i += id.opts.GroupSize {
+			if len(formatted) > 0 {
+				formatted = append(formatted, ' ')
+			}
 			end := i + id.opts.GroupSize
 			if end > len(out) {
 				end = len(out)
 			}
-			formatted += out[i:end] + " "
+			formatted = append(formatted, out[i:end]...)
 		}
 		out = formatted
 	}
 	return out
 }
 
+// ToString converts a uint64 to a string.
+func (id *ID) ToString(n uint64) string {
+	return string(id.ToRunes(n))
+}
+
+// ToNr converts a string to a uint64.
 func (id *ID) ToNr(s string) (uint64, error) {
 	if id.opts.IgnoreCase {
 		s = strings.ToUpper(s)
@@ -90,12 +106,12 @@ func init() {
 	}
 }
 
-// ToString returns the string representation of a uint64, given the available tokens.
+// ToString returns the string representation of a uint64, using the defaults.
 func ToString(n uint64) string {
 	return converter.ToString(n)
 }
 
-// ToNr returns the uint64 representation of a string, given the available tokens. An error occurs when the string contains
+// ToNr returns the uint64 representation of a string, using the defaults. An error occurs when the string contains
 // a rune that is not in the available token set.
 func ToNr(s string) (uint64, error) {
 	return converter.ToNr(s)

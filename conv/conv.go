@@ -5,44 +5,51 @@ package conv
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 // Set is the receiver that implements ToString and Touint64.
 type Conv struct {
-	tokens   string
-	tokenLen int
+	tokens     []rune
+	tokenIndex map[rune]int
+	tokenLen   int
 }
 
 // New returns a new Conv. The input is e.g. for decimal conversions: "0123456789", for binary: "01", etc.
-func New(tokens string) (*Conv, error) {
-	if tokens == "" {
+func New(alphabet string) (*Conv, error) {
+	if alphabet == "" {
 		return nil, errors.New("conversion tokens may not be an empty string")
 	}
-	partsMap := map[string]struct{}{}
-	for _, part := range strings.Split(tokens, "") {
-		if _, ok := partsMap[part]; ok {
+	tokens := []rune(alphabet)
+	tokenIndex := map[rune]int{}
+	for i, part := range tokens {
+		if _, ok := tokenIndex[part]; ok {
 			return nil, fmt.Errorf("%v repeats in tokens %q", part, tokens)
 		}
-		partsMap[part] = struct{}{}
+		tokenIndex[part] = i
 	}
 
 	return &Conv{
-		tokens:   tokens,
-		tokenLen: len(tokens),
+		tokens:     tokens,
+		tokenIndex: tokenIndex,
+		tokenLen:   len(tokens),
 	}, nil
 }
 
-// ToString converts a uint64 to its string representation.
-func (a *Conv) ToString(nr uint64) string {
-	reversed := ""
+// FirstRune returns the first rune of the tokens alphabet.
+func (a *Conv) FirstRune() rune {
+	return a.tokens[0]
+}
+
+// ToRunes converts a uint64 to runes representation.
+func (a *Conv) ToRunes(nr uint64) []rune {
+	reversed := []rune{}
 	for nr > 0 {
 		remainder := nr % uint64(a.tokenLen)
 		nr = nr / uint64(a.tokenLen)
-		reversed += string([]byte{a.tokens[remainder]})
+		reversed = append(reversed, a.tokens[remainder])
 	}
-	if reversed == "" {
-		reversed = string([]byte{a.tokens[0]})
+	if len(reversed) == 0 {
+		reversed = []rune{a.tokens[0]}
 	}
 
 	runes := make([]rune, len(reversed))
@@ -54,18 +61,24 @@ func (a *Conv) ToString(nr uint64) string {
 	for i := 0; i < n/2; i++ {
 		runes[i], runes[n-1-i] = runes[n-1-i], runes[i]
 	}
-	return string(runes)
+	return runes
 }
 
-// Touint64 converts a string to its numeric representation. An error occurs when the string contains runes that
+// ToString converts a uint64 to a string representation.
+func (a *Conv) ToString(nr uint64) string {
+	return string(a.ToRunes(nr))
+}
+
+// ToNr converts a string to its numeric representation. An error occurs when the string contains runes that
 // are not in the available tokens.
 func (a *Conv) ToNr(s string) (uint64, error) {
 	out := uint64(0)
 	pwr := 0
-	for i := len(s) - 1; i >= 0; i-- {
-		token := s[i : i+1]
-		index := strings.Index(a.tokens, token)
-		if index == -1 {
+	tokens := []rune(s)
+	for i := len(tokens) - 1; i >= 0; i-- {
+		token := tokens[i]
+		index, ok := a.tokenIndex[token]
+		if !ok {
 			return 0, fmt.Errorf("token %q not in %q", token, a.tokens)
 		}
 		// Can't use math.Pow() because of the float64 conversions. The below fails at large uint64 values.
