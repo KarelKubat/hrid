@@ -7,17 +7,18 @@ This is a Go package that you can include in your own code to generate IDs in st
 ```shell
 # Convert a number to an ID. The output is space-separated into sets to improve readability.
 $ hrid 9999999999999999999
-08NH S30K 4XFY YY
+8NHS 30K4 XFYY YAM
 
 # Reverse, the ID is interpreted without regard to casing and spaces.
-hrid -id '08nhs 30k 4xf YYY'
+$ hrid -id '8nh s30 k4xf yyy AM'
 9999999999999999999
 ```
 
 Out-of-the-box defaults are applied that are meant to be as sane as possible for humans:
 
 - The "alphabet" for the conversion is `0123456789ABCDEFGHKLMNPQRSTUVWXY`: digits and uppercase letters. This default tries to avoid tokens that are similar to one another: there is no I (looks as a 1), there is no O (looks as a 0), etc.
-- Generated IDs (strings) are padded to a length of 14 runes, which plays well with the alphabet: you don't need more tokens to represent a `uint64`.
+- Each generated ID is appended with two checksum runes.
+- Generated IDs (strings) are padded to a length of 14 runes, which plays well with the alphabet: you don't need more tokens to represent a `uint64`. With the two checksum runes this yields 16 runes (nicely separated into four groups of four).
 - Casing is ignored when converting an ID to a number; an `A` and an `a` are treated the same. This also plays well with the default alphabet (but would have to be turned off if you want to use an alphabet that has upper and lower case tokens).
 - Generated IDs are split into groups of four runes for better readability.
 
@@ -25,10 +26,10 @@ All these settings can be programmatically overruled in the package `hrid/id`, o
 
 ```shell
 $ hrid -tokens=01  12345678
-1011 1100 0110 0001 0100 1110
+1011 1100 0110 0001 0100 1110 00
 
 $ hrid -tokens=🥵😀  12345678
-😀🥵😀😀 😀😀🥵🥵 🥵😀😀🥵 🥵🥵🥵😀 🥵😀🥵🥵 😀😀😀🥵
+😀🥵😀😀 😀😀🥵🥵 🥵😀😀🥵 🥵🥵🥵😀 🥵😀🥵🥵 😀😀😀🥵 🥵🥵
 ```
 
 The alphabet is interpreted as follows:
@@ -58,10 +59,11 @@ import (
 
 func main() {
 	converter, err := id.New(&id.Opts{
-		Tokens:     "0123456789ABCDEF", // Hex converter
-		StringLen:  8,                  // Pad IDs to 8 tokens if needed
-		IgnoreCase: true,               // treat an `a` as `A`
-		GroupSize:  4,                  // group by 4 tokens as in "DEAD BEEF"
+		Tokens:      "0123456789ABCDEF", // Hex converter
+		StringLen:   8,                  // Pad IDs to 8 tokens if needed
+		IgnoreCase:  true,               // treat an `a` as `A`
+		GroupSize:   4,                  // group by 4 tokens as in "DEAD BEEF"
+		ChecksumLen: 0,                  // Don't add a checksum runes when generating IDs
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -120,7 +122,7 @@ import (
 )
 
 func main() {
-	converter, err := conv.New("abcdefgh") // octal converter but with digits a-h
+	converter, err := conv.New("abcdefgh", 0) // octal converter but with digits a-h, zero checksum runes
 	if err != nil {
 		log.Fatal(err)
 	}
