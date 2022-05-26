@@ -1,4 +1,4 @@
-// file: test/m2.go
+// file: test/m2/main.go
 // Example of the implicit converter that uses defaults.
 package main
 

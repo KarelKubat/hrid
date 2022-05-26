@@ -1,4 +1,4 @@
-// file: test/m3.go
+// file: test/m3/main.go
 package main
 
 import (

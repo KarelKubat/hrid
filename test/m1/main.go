@@ -1,4 +1,4 @@
-// file: test/m1.go
+// file: test/m1/main.go
 // Example of an explicit converter.
 package main
 
