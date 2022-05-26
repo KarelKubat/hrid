@@ -6,22 +6,26 @@ use File::Spec;
 
 # Purpose: check that every .go file has a test and that it works.
 
-my (%test_in_dir, $test_found);
+my $test_found;
 
 sub wanted {
     my $f = $File::Find::name;
+    # Strip leading ./ for display purposes.
     $f =~ s{^./}{};
-    my $path = $f;
-    $path =~ s{/[^/]*$}{};
 
-    if ($f =~ m{_test.go$}) {
-        $test_in_dir{$path} = 1;
-        $test_found = 1;
-        return;
-    }
-    if ($f =~ m{.go$}) {
-        $test_in_dir{$path} = 0 unless ($test_in_dir{$path});
-        return;
+    # Skip not interesting files.
+    next unless ($f =~ m{.go$});
+    next if ($f =~ m{_test.go});
+
+    # Found a source file XYZ.go. Verify that XYX_test.go exists,
+    # if not, warn about it.
+    my $test = $f;
+    $test =~ s{.go$}{_test.go};
+    if (! -f $test) {
+        warn("gotests: $f lacks a corresponding $test, add it\n");
+    } else {
+        # Found tests to run later
+        $test_found++;
     }
 }
 
@@ -30,13 +34,8 @@ find({
     no_chdir => 1,
 },  '.');
 
-for my $dir (sort(keys(%test_in_dir))) {
-    if (!$test_in_dir{$dir}) {
-        warn("gotests: $dir contains no tests, you should add them\n");
-    }
-}
 if ($test_found) {
-    print("gotests: running all tests\n");
+    print("gotests: found $test_found tests\n");
     open(my $if, "go test ./... |") or die("cannot start `go test`\n");
     my @lines;
     while (my $line = <$if>) {
