@@ -26,7 +26,7 @@ func TestIntPow(t *testing.T) {
 }
 
 func TestToNumber(t *testing.T) {
-	a, err := New("0123456789")
+	a, err := New("0123456789", 0)
 	if err != nil {
 		t.Fatalf("New(0-9) returned unexpected error %v", err)
 	}
@@ -71,7 +71,7 @@ func TestToNumber(t *testing.T) {
 		}
 	}
 
-	a, err = New("01")
+	a, err = New("01", 0)
 	if err != nil {
 		t.Fatalf("New(01) returned unexpected error %v", err)
 	}
@@ -111,7 +111,7 @@ func TestToNumber(t *testing.T) {
 }
 
 func TestToString(t *testing.T) {
-	a, err := New("0123456789")
+	a, err := New("0123456789", 0)
 	if err != nil {
 		t.Fatalf("New(0-9) returned unexpected error %v", err)
 	}
@@ -156,7 +156,7 @@ func TestDuplicatesInTokens(t *testing.T) {
 			wantError: true,
 		},
 	} {
-		_, err := New(test.tokens)
+		_, err := New(test.tokens, 123)
 		gotError := err != nil
 		if gotError != test.wantError {
 			t.Errorf("New(%q): error=%v, want=%v", test.tokens, gotError, test.wantError)
@@ -165,7 +165,7 @@ func TestDuplicatesInTokens(t *testing.T) {
 }
 
 func TestLargeNumbers(t *testing.T) {
-	a, err := New("0123456789ABCDEFGHKLMNPQRSTUVWXYZ")
+	a, err := New("0123456789ABCDEFGHKLMNPQRSTUVWXYZ", 0)
 	if err != nil {
 		t.Fatalf("New(0-Z) returned unexpected error %v", err)
 	}
@@ -187,6 +187,35 @@ func TestLargeNumbers(t *testing.T) {
 		}
 		if u != n {
 			t.Errorf("a.ToString(%v) = %q, but a.ToNr(%q) = %v", n, s, s, u)
+		}
+	}
+}
+
+func TestChecksum(t *testing.T) {
+	for checksumRunes := 0; checksumRunes < 10; checksumRunes++ {
+		a, err := New("0123456789ABCDEF", checksumRunes)
+		if err != nil {
+			t.Fatalf("New(0-F) returned unexpected error %v", err)
+		}
+		for _, n := range []uint64{
+			123456789,
+			1234567890,
+			123456789000,
+			1234567890000,
+			12345678900000,
+			123456789000000,
+			1234567890000000,
+			12345678900000000,
+			1234567890000000000,
+		} {
+			s := a.ToString(n)
+			u, err := a.ToNr(s)
+			if err != nil {
+				t.Fatalf("ToNr(%q) = _,%q, need nil error", s, err.Error())
+			}
+			if u != n {
+				t.Errorf("a.ToString(%v) = %q, but a.ToNr(%q) = %v", n, s, s, u)
+			}
 		}
 	}
 }

@@ -9,29 +9,31 @@ import (
 
 // Set is the receiver that implements ToString and Touint64.
 type Conv struct {
-	tokens     []rune
-	tokenIndex map[rune]int
-	tokenLen   int
+	tokens      []rune
+	checksumLen int
+	tokenIndex  map[rune]int
+	tokenLen    int
 }
 
 // New returns a new Conv. The input is e.g. for decimal conversions: "0123456789", for binary: "01", etc.
-func New(alphabet string) (*Conv, error) {
+func New(alphabet string, checksumLen int) (*Conv, error) {
 	if alphabet == "" {
-		return nil, errors.New("conversion tokens may not be an empty string")
+		return nil, errors.New("conv.New: conversion tokens may not be an empty string")
 	}
 	tokens := []rune(alphabet)
 	tokenIndex := map[rune]int{}
 	for i, part := range tokens {
 		if _, ok := tokenIndex[part]; ok {
-			return nil, fmt.Errorf("%v repeats in tokens %q", part, tokens)
+			return nil, fmt.Errorf("conv.New: %v repeats in tokens %q", string(part), string(tokens))
 		}
 		tokenIndex[part] = i
 	}
 
 	return &Conv{
-		tokens:     tokens,
-		tokenIndex: tokenIndex,
-		tokenLen:   len(tokens),
+		tokens:      tokens,
+		checksumLen: checksumLen,
+		tokenIndex:  tokenIndex,
+		tokenLen:    len(tokens),
 	}, nil
 }
 
@@ -40,7 +42,7 @@ func (a *Conv) FirstRune() rune {
 	return a.tokens[0]
 }
 
-// ToRunes converts a uint64 to runes representation.
+// ToRunes converts a uint64 to runes representation and adds checksum runes if so requested.
 func (a *Conv) ToRunes(nr uint64) []rune {
 	reversed := []rune{}
 	for nr > 0 {
@@ -61,6 +63,11 @@ func (a *Conv) ToRunes(nr uint64) []rune {
 	for i := 0; i < n/2; i++ {
 		runes[i], runes[n-1-i] = runes[n-1-i], runes[i]
 	}
+
+	// Add checksumming of so requested.
+	for i := 0; i < a.checksumLen; i++ {
+		runes = append(runes, a.checksum(runes))
+	}
 	return runes
 }
 
@@ -72,14 +79,29 @@ func (a *Conv) ToString(nr uint64) string {
 // ToNr converts a string to its numeric representation. An error occurs when the string contains runes that
 // are not in the available tokens.
 func (a *Conv) ToNr(s string) (uint64, error) {
+	tokens := []rune(s)
+
+	// Verify checksumming.
+	if len(tokens) <= a.checksumLen {
+		return 0, fmt.Errorf("conv.ToNr: %q doesn't accomodate %v checksum runes", s, a.checksumLen)
+	}
+	for i := 0; i < a.checksumLen; i++ {
+		gotCs := tokens[len(tokens)-1:][0]
+		tokens = tokens[:len(tokens)-1]
+		wantCs := a.checksum(tokens)
+		if gotCs != wantCs {
+			return 0, fmt.Errorf("conv.ToNr: checksum error at %v, expected %v", string(gotCs), string(wantCs))
+		}
+	}
+
+	// Convert to a number.
 	out := uint64(0)
 	pwr := 0
-	tokens := []rune(s)
 	for i := len(tokens) - 1; i >= 0; i-- {
 		token := tokens[i]
 		index, ok := a.tokenIndex[token]
 		if !ok {
-			return 0, fmt.Errorf("token %q not in %q", token, a.tokens)
+			return 0, fmt.Errorf("conv.ToNr: token %v not in %q", string(token), string(a.tokens))
 		}
 		// Can't use math.Pow() because of the float64 conversions. The below fails at large uint64 values.
 		// out += uint64(math.Pow(float64(a.tokenLen), float64(pwr)) * float64(index))
@@ -89,6 +111,7 @@ func (a *Conv) ToNr(s string) (uint64, error) {
 	return out, nil
 }
 
+// intPow is a helper to compute m to the power of e.
 func intPow(m, e int) uint64 {
 	if e == 0 {
 		return 1
@@ -98,4 +121,14 @@ func intPow(m, e int) uint64 {
 		out *= uint64(m)
 	}
 	return out
+}
+
+// checksum is a helper to compute the checksum of a slice of runes.
+func (a *Conv) checksum(runes []rune) rune {
+	cs := 0
+	for _, r := range runes {
+		cs += a.tokenIndex[r]
+		cs %= len(a.tokens)
+	}
+	return a.tokens[cs]
 }
