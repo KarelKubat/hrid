@@ -12,7 +12,7 @@ import (
 
 const (
 	usage = `
-This is hrid, the Human Readable ID Generator.
+This is hrid, the Human Readable ID converter.
 Usage:
   hrid [FLAGS] NUMBER - generates a human readable ID and prints it on stdout
   hrid [FLAGS] -id ID - re-interprets the ID as a number and prints it on stdout
