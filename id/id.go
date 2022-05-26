@@ -17,14 +17,17 @@ const (
 	IgnoreCase = true
 	// GroupSize defines the length of groups in generated IDs, for better readability.
 	GroupSize = 4
+	// Default number of checksum runes to add to a generated ID.
+	ChecksumLen = 2
 )
 
 // Opts defines the options when constructing an ID converter.
 type Opts struct {
-	Tokens     string // Tokens to use for conversion: "01" for binary, "0123456789" for decimal, etc.
-	StringLen  int    // Length of an ID, which is left-padded with the first token (interpreted as zero).
-	IgnoreCase bool   // When true, casing will be ignored during conversions.
-	GroupSize  int    // When non-zero, an ID will be split into space-delimited groups for readability (e.g. "0123 4567").
+	Tokens      string // Tokens to use for conversion: "01" for binary, "0123456789" for decimal, etc.
+	StringLen   int    // Minimunm length of an ID, which is left-padded with the first token (interpreted as zero).
+	IgnoreCase  bool   // When true, casing will be ignored during conversions.
+	GroupSize   int    // When non-zero, an ID will be split into space-delimited groups for readability (e.g. "0123 4567").
+	ChecksumLen int    // Number of checksum runes to add to an ID, 0 for no checksumming.
 }
 
 // ID is the receiver that implements conversions.
@@ -38,7 +41,7 @@ func New(o *Opts) (*ID, error) {
 	if o.IgnoreCase {
 		o.Tokens = strings.ToUpper(o.Tokens)
 	}
-	conv, err := conv.New(o.Tokens)
+	conv, err := conv.New(o.Tokens, o.ChecksumLen)
 	if err != nil {
 		return nil, err
 	}
