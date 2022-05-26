@@ -1,11 +1,23 @@
-# hrid
+# hrid: Human Readable IDs
 
-`hrid` stands for *Human Readable ID*. 
+## But why?
+
+There are still some interfaces where computer-generated numbers need to be shown to humans (say on a paper bill), who dutifully need to copy them and eventually enter them in some UI for further processing. 
+
+A typical example is an [IBAN](https://en.wikipedia.org/wiki/International_Bank_Account_Number) (international bank number). You receive your bill for whatever you bought and you need to enter this IBAN in your e-banking app to initiate a payment. This IBAN has a country code and up to 24 digits. The IBAN format already has some safeguards against human errors: there are two checksum digits, so that's good. 
+
+> **But copying (up to) 24 digits is not an easy task for humans: the sheer number of digits go get right introduces the possibility of errors.**
+
+So why only digits? That makes the length unnecessarily long: base-10 yields a way longer representation than base-16. But why stop at base-16? Why not base-20 or even higher?
+
+> Why not "invent" an *alphabet* of digits that's long enough so that large numbers can be respresented using short sequences, whilst the alphabet is designed to avoid typos? How about these digits: `0123456789ABCDEFGHKLMNPQRSTUVWXY`. This is a base-32 notation which attempts to avoid typos. There is no `O` because it looks too much like a zero, there is no `I` because it looks too much like a one, etc.. And there are only uppercase letters, so humans can enter things using whatever casing they like - the computer can compensate.
+
+## Overview
 
 This is a Go package that you can include in your own code to generate IDs in string form from `uint64` numbers, or to reverse that and to decode a string into a number. There is also a stand-alone program `hrid`. Some examples:
 
 ```shell
-# Convert a number to an ID. The output is space-separated into sets to improve readability.
+# Convert a number to an ID. The generated output is space-separated into sets to improve readability.
 $ hrid 9999999999999999999
 8NHS 30K4 XFYY YAM
 
@@ -37,7 +49,6 @@ The alphabet is interpreted as follows:
 - The first rune of the alphabet is always interpreted as the value zero, the second rune is always interpreted as the value 1, the third as 2, and so on,
 - Therefore, the length of the alphabet is the "base" of the number system,
 - Hence, `0123456789ABCDEF` defines a hexadecimal converter using the normally applicable digits 0-F.
-
 
 ## Package hrid/id
 
@@ -106,7 +117,7 @@ func main() {
 
 ## Package hrid/conv
 
-This package is respoonsible for the actual conversion. It can be directly called from your program if you don't care about padding or grouping in the string representations.
+This package is respoonsible for the actual conversion. It can be directly called from your program if you don't care about padding, grouping or case-insensitivity in the string representations.
 
 ### Synopsis
 
@@ -136,3 +147,75 @@ func main() {
 	fmt.Println("cdcc as number:", nr)
 }
 ```
+
+### Checksumming
+
+The checksum over an ID is computed and postifixed to the ID as follows:
+- The checksum starts at zero.
+- For each rune in the ID, its position in the alphabet (i.e., its numeric value) is added to the checksum, and then the checksum is resized to "fit" the base of the alphabet using a modulo operation.
+- The resulting checksum rune is added to the ID.
+- When the checksum length indicates that more than 1 checksum runes should be added, then the process repeats. I.e., the second checksum rune that is added represents the ID *and* the first checksum rune.
+
+Assuming that the alphabet is `ABCDEFGH`, then an `A` is the value zero, a `B` is the value one etc. (This is in fact a base-8 conversion, but with funky digits `A-H` instead of `0-7`.) When converting the number 14 to an ID, with 2 checksum runes, the following applies:
+- 14 is represented as `BG` (check your octal converter, 14 decimal is 016 octal).
+- The first checksum rune is `H`, because `B`=1 plus `G`=6 is 7, which still fits the octal system.
+- The second checksum rune is `G`, because `B`=1 plus `G`=6 plus `H`=7 is 14, and 17%8=6, or `G`.
+- The overall ID is then `BGHG`, with the last 2 runes representing the checksum.
+
+An example is `test/m4/main.go`:
+
+```go
+/ file: test/m4/main.go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/KarelKubat/hrid/conv"
+)
+
+const (
+	alphabet = "ABCDEFGH"
+)
+
+func main() {
+	for checksumLen := 0; checksumLen < 8; checksumLen++ {
+		converter, err := conv.New("ABCDEFGH", checksumLen) // Base-8 conversion, but using funky digits
+		if err != nil {
+			log.Fatal(err)
+		}
+		for nr := uint64(0); nr <= 15; nr++ {
+			id := converter.ToString(nr)
+			decoded, err := converter.ToNr(id)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%2v yields ID %12q (with %v checksum digits) which decodes to %v\n", nr, id, checksumLen, decoded)
+			if nr != decoded {
+				log.Fatal("decoding failed")
+			}
+		}
+	}
+}
+```
+
+Abbreviated output:
+
+```
+14 yields ID         "BG" (with 0 checksum digits) which decodes to 14
+14 yields ID        "BGH" (with 1 checksum digits) which decodes to 14
+14 yields ID       "BGHG" (with 2 checksum digits) which decodes to 14 
+14 yields ID      "BGHGE" (with 3 checksum digits) which decodes to 14
+14 yields ID     "BGHGEA" (with 4 checksum digits) which decodes to 14
+14 yields ID    "BGHGEAA" (with 5 checksum digits) which decodes to 14
+```
+
+## Error Conditions
+
+The following errors may be raised:
+
+- *Conversion tokens may not be an empty string*: The converter needs an alphabet to work with. Triggered by e.g.: `hrid -tokens '' 1234` (`''` is an empty string).
+- *$TOKEN repeates in tokens*: Each token must occur only once in the alphabet that the converter uses. Triggered by e.g.: `hrid -tokens 'abca' 12` (the `a` repeats).
+- *$ALPHABET doesn't accomodate $LENGTH checksum runes*: When an ID is converted into a number, and when checksumming is used, then the ID must accomodate at least the number of checksum runes, plus one. Triggered by e.g.: `hrid -id AA` (there are now 2 checksum tokens, but nothing for the ID itself).
+- *checksum error at ...*: The ID doesn't 
