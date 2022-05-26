@@ -25,6 +25,7 @@ var (
 	lenFlag        = flag.Int("length", id.StringLen, "minimum length of generated IDs, set to 0 for no padding")
 	ignoreCaseFlag = flag.Bool("ignorecase", id.IgnoreCase, "when true, casing is ignored when converting IDs to numbers")
 	groupsizeFlag  = flag.Int("groupsize", id.GroupSize, "size of space-delimited groups in generated IDs, for better readability")
+	checksumFlag   = flag.Int("checksum", id.ChecksumLen, "number of checksum runes to append")
 
 	idFlag      = flag.Bool("id", false, "when true, arguments are taken as IDs, default: numbers")
 	verboseFlag = flag.Bool("verbose", false, "show options with which the converter is instantiated")
@@ -37,10 +38,11 @@ func main() {
 		os.Exit(1)
 	}
 	opts := &id.Opts{
-		Tokens:     *tokensFlag,
-		StringLen:  *lenFlag,
-		IgnoreCase: *ignoreCaseFlag,
-		GroupSize:  *groupsizeFlag,
+		Tokens:      *tokensFlag,
+		StringLen:   *lenFlag,
+		IgnoreCase:  *ignoreCaseFlag,
+		GroupSize:   *groupsizeFlag,
+		ChecksumLen: *checksumFlag,
 	}
 	idConverter, err := id.New(opts)
 	if err != nil {
