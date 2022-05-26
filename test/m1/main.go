@@ -11,10 +11,11 @@ import (
 
 func main() {
 	converter, err := id.New(&id.Opts{
-		Tokens:     "0123456789ABCDEF", // Hex converter
-		StringLen:  8,                  // Pad IDs to 8 tokens if needed
-		IgnoreCase: true,               // treat an `a` as `A`
-		GroupSize:  4,                  // group by 4 tokens as in "DEAD BEEF"
+		Tokens:      "0123456789ABCDEF", // Hex converter
+		StringLen:   8,                  // Pad IDs to 8 tokens if needed
+		IgnoreCase:  true,               // treat an `a` as `A`
+		GroupSize:   4,                  // group by 4 tokens as in "DEAD BEEF"
+		ChecksumLen: 0,                  // Don't add a checksum runes when generating IDs
 	})
 	if err != nil {
 		log.Fatal(err)

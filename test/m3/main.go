@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	converter, err := conv.New("abcdefgh") // octal converter but with digits a-h
+	converter, err := conv.New("abcdefgh", 0) // octal converter but with digits a-h, zero checksum runes
 	if err != nil {
 		log.Fatal(err)
 	}
