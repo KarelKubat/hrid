@@ -24,7 +24,7 @@ const (
 // Opts defines the options when constructing an ID converter.
 type Opts struct {
 	Tokens      string // Tokens to use for conversion: "01" for binary, "0123456789" for decimal, etc.
-	StringLen   int    // Minimunm length of an ID, which is left-padded with the first token (interpreted as zero).
+	StringLen   int    // Minimum length of an ID, which is left-padded with the first token (interpreted as zero).
 	IgnoreCase  bool   // When true, casing will be ignored during conversions.
 	GroupSize   int    // When non-zero, an ID will be split into space-delimited groups for readability (e.g. "0123 4567").
 	ChecksumLen int    // Number of checksum runes to add to an ID, 0 for no checksumming.
