@@ -45,7 +45,7 @@ Package `hrid/id` exports global functions (that use the default alphabet, group
 ### Synopsis
 
 ```go
-// file: test/m1.go
+// file: test/m1/main.go
 // Example of an explicit converter.
 package main
 
@@ -79,7 +79,7 @@ func main() {
 ```
 
 ```go
-// file: test/m2.go
+// file: test/m2/main.go
 // Example of the implicit converter that uses defaults.
 package main
 
@@ -109,7 +109,7 @@ This package is respoonsible for the actual conversion. It can be directly calle
 ### Synopsis
 
 ```go
-/ file: test/m3.go
+// file: test/m3/main.go
 package main
 
 import (
