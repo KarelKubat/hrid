@@ -10,13 +10,14 @@ import (
 
 const (
 	// Tokens are the default runes from which IDs may be constructed.
-	Tokens = "0123456789ABCDEFGHKLMNPQRSTUVWXY"
+	// Removed letters: I(similar to 1), J(1), O(0), S(5)
+	Tokens = "0123456789ABCDEFGHKLMNPQRTUVWXY"
 	// StringLen defines the default padding for ID generation.
 	StringLen = 14
 	// IgnoreCase defines whether ID to number conversions care about casing.
 	IgnoreCase = true
 	// GroupSize defines the length of groups in generated IDs, for better readability.
-	GroupSize = 4
+	GroupSize = 5
 	// Default number of checksum runes to add to a generated ID.
 	ChecksumLen = 2
 )
@@ -56,7 +57,7 @@ func (id *ID) ToRunes(n uint64) []rune {
 	out := id.converter.ToRunes(n)
 
 	// Prepend the first alphabet rune until the desired length is reached.
-	for len(out) < id.opts.StringLen {
+	for len(out) < id.opts.StringLen+id.opts.ChecksumLen-1 {
 		out = append([]rune{id.converter.FirstRune()}, out...)
 	}
 
@@ -99,10 +100,11 @@ var converter *ID
 func init() {
 	var err error
 	converter, err = New(&Opts{
-		Tokens:     Tokens,
-		StringLen:  StringLen,
-		IgnoreCase: IgnoreCase,
-		GroupSize:  GroupSize,
+		Tokens:      Tokens,
+		StringLen:   StringLen,
+		IgnoreCase:  IgnoreCase,
+		GroupSize:   GroupSize,
+		ChecksumLen: ChecksumLen,
 	})
 	if err != nil {
 		panic("failed to construct default converter")
