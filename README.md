@@ -30,7 +30,7 @@ $ hrid -id 'cn hm 74 xc qy 4q h24'
 
 Out-of-the-box defaults are applied that are meant to be as sane as possible for humans:
 
-- The "alphabet" for the conversion consists of digits and uppercase letters. This default tries to avoid tokens that are similar to one another: there is no I (looks as a 1), there is no O (looks as a 0), etc. See `hrid/id/id.go` for the actual value. (You can always supply a different alphabet for your conversions.)
+- The "alphabet" for the conversion consists of digits and uppercase letters. This default tries to avoid tokens that are similar to one another: there is no I (looks as a 1), there is no O (looks as a 0), etc. See `id/id.go` for the actual value. (You can always supply a different alphabet for your conversions.)
 - Each generated ID is appended with two checksum runes.
 - Generated IDs (strings) are padded to a length of 13 runes, which plays well with the alphabet: you don't need more tokens to represent a `uint64`. With the two checksum runes this yields 15 runes (nicely separated into three groups of five).
 - Casing is ignored when converting an ID to a number; an `A` and an `a` are treated the same. This also plays well with the default alphabet (but would have to be turned off if you want to use an alphabet that has upper and lower case tokens).
