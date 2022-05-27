@@ -2,6 +2,8 @@
 
 ## But why?
 
+![But why?](ButWhy.gif)
+
 There are still some interfaces where computer-generated numbers need to be shown to humans (say on a paper bill), who dutifully need to copy them and eventually enter them in some UI for further processing. 
 
 A typical example is an [IBAN](https://en.wikipedia.org/wiki/International_Bank_Account_Number) (international bank number). You receive your bill for whatever you bought and you need to enter this IBAN in your e-banking app to initiate a payment. This IBAN has a country code and up to 24 digits. The IBAN format already has some safeguards against human errors: there are two checksum digits, so that's good. 
