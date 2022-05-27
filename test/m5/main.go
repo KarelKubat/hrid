@@ -12,7 +12,7 @@ import (
 
 func main() {
 	converter, err := id.New(&id.Opts{
-		Tokens:      "0123456789ABCDEF",
+		Alphabet:    "0123456789ABCDEF",
 		IgnoreCase:  true,
 		ChecksumLen: 2,
 	})

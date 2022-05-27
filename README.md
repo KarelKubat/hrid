@@ -37,10 +37,10 @@ Out-of-the-box defaults are applied that are meant to be as sane as possible for
 All these settings can be programmatically overruled in the package `hrid/id`, or by the flags that `hrid` accepts (try `hrid -help`). As a silly example, here's a binary converter using the standard 0 and 1, or using smileys:
 
 ```shell
-$ hrid -tokens=01  12345678
+$ hrid -alphabet=01  12345678
 10111 10001 10000 10100 11100 0
 
-$ hrid -tokens=🥵😀  12345678
+$ hrid -alphabet=🥵😀  12345678
 😀🥵😀😀😀 😀🥵🥵🥵😀 😀🥵🥵🥵🥵 😀🥵😀🥵🥵 😀😀😀🥵🥵 🥵
 ```
 
@@ -72,7 +72,7 @@ import (
 
 func main() {
 	converter, err := id.New(&id.Opts{
-		Tokens:      "0123456789ABCDEF", // Hex converter
+		Alphabet:    "0123456789ABCDEF", // Hex converter
 		StringLen:   8,                  // Pad IDs to 8 tokens if needed
 		IgnoreCase:  true,               // treat an `a` as `A`
 		GroupSize:   4,                  // group by 4 tokens as in "DEAD BEEF"
@@ -243,7 +243,7 @@ import (
 
 func main() {
 	converter, err := id.New(&id.Opts{
-		Tokens:      "0123456789ABCDEF",
+		Alphabet:    "0123456789ABCDEF",
 		IgnoreCase:  true,
 		ChecksumLen: 2,
 	})

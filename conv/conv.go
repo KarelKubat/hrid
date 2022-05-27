@@ -8,7 +8,7 @@ import (
 
 // Set is the receiver that implements ToString and Touint64.
 type Conv struct {
-	tokens      []rune
+	alphabet    []rune
 	checksumLen int
 	tokenIndex  map[rune]int
 	tokenLen    int
@@ -29,7 +29,7 @@ func New(alphabet string, checksumLen int) (*Conv, *er.Err) {
 	}
 
 	return &Conv{
-		tokens:      tokens,
+		alphabet:    tokens,
 		checksumLen: checksumLen,
 		tokenIndex:  tokenIndex,
 		tokenLen:    len(tokens),
@@ -38,7 +38,7 @@ func New(alphabet string, checksumLen int) (*Conv, *er.Err) {
 
 // FirstRune returns the first rune of the tokens alphabet.
 func (a *Conv) FirstRune() rune {
-	return a.tokens[0]
+	return a.alphabet[0]
 }
 
 // ToRunes converts a uint64 to runes representation and adds checksum runes if so requested.
@@ -47,10 +47,10 @@ func (a *Conv) ToRunes(nr uint64) []rune {
 	for nr > 0 {
 		remainder := nr % uint64(a.tokenLen)
 		nr = nr / uint64(a.tokenLen)
-		reversed = append(reversed, a.tokens[remainder])
+		reversed = append(reversed, a.alphabet[remainder])
 	}
 	if len(reversed) == 0 {
-		reversed = []rune{a.tokens[0]}
+		reversed = []rune{a.alphabet[0]}
 	}
 
 	runes := make([]rune, len(reversed))
@@ -100,7 +100,7 @@ func (a *Conv) ToNr(s string) (uint64, *er.Err) {
 		token := tokens[i]
 		index, ok := a.tokenIndex[token]
 		if !ok {
-			return 0, er.Newf(er.NoSuchTokenError, "token %v not in alphabet %q", string(token), string(a.tokens))
+			return 0, er.Newf(er.NoSuchTokenError, "token %v not in alphabet %q", string(token), string(a.alphabet))
 		}
 		// Can't use math.Pow() because of the float64 conversions. The below fails at large uint64 values.
 		// out += uint64(math.Pow(float64(a.tokenLen), float64(pwr)) * float64(index))
@@ -127,7 +127,7 @@ func (a *Conv) checksum(runes []rune) rune {
 	cs := 0
 	for _, r := range runes {
 		cs += a.tokenIndex[r]
-		cs %= len(a.tokens)
+		cs %= len(a.alphabet)
 	}
-	return a.tokens[cs]
+	return a.alphabet[cs]
 }

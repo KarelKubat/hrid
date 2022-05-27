@@ -21,7 +21,7 @@ Try hrid -help for an overview of all flags.
 )
 
 var (
-	tokensFlag     = flag.String("tokens", id.Tokens, "conversion alphabet: first rune represents 0, second 1, etc.")
+	alphabetFlag   = flag.String("alphabet", id.Alphabet, "conversion alphabet: first rune represents 0, second 1, etc.")
 	lenFlag        = flag.Int("length", id.StringLen, "minimum length of generated IDs, set to 0 for no padding")
 	ignoreCaseFlag = flag.Bool("ignorecase", id.IgnoreCase, "when true, casing is ignored when converting IDs to numbers")
 	groupsizeFlag  = flag.Int("groupsize", id.GroupSize, "size of space-delimited groups in generated IDs, for better readability")
@@ -33,12 +33,17 @@ var (
 
 func main() {
 	flag.Parse()
-	if flag.NArg() == 0 {
+	hrid(flag.Args())
+}
+
+// hrid is a helper function that can be called from the unit test.
+func hrid(args []string) {
+	if len(args) == 0 {
 		fmt.Fprint(os.Stderr, usage)
 		os.Exit(1)
 	}
 	opts := &id.Opts{
-		Tokens:      *tokensFlag,
+		Alphabet:    *alphabetFlag,
 		StringLen:   *lenFlag,
 		IgnoreCase:  *ignoreCaseFlag,
 		GroupSize:   *groupsizeFlag,
@@ -51,7 +56,7 @@ func main() {
 	if *verboseFlag {
 		log.Printf("Converter options: %+v", *opts)
 	}
-	for _, a := range flag.Args() {
+	for _, a := range args {
 		if *idFlag {
 			n, err := idConverter.ToNr(a)
 			if err != nil {

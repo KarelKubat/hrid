@@ -78,7 +78,7 @@ func TestFormattingWithoutChecksum(t *testing.T) {
 		},
 	} {
 		id, err := New(&Opts{
-			Tokens:      "0123456789",
+			Alphabet:    "0123456789",
 			StringLen:   0,
 			IgnoreCase:  false,
 			GroupSize:   test.groupSize,

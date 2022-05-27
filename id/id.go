@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	// Tokens are the default runes from which IDs may be constructed.
+	// Alphabet holds the default runes from which IDs may be constructed.
 	// Removed letters: I(similar to 1), J(1), O(0), S(5)
-	Tokens = "0123456789ABCDEFGHKLMNPQRTUVWXY"
+	Alphabet = "0123456789ABCDEFGHKLMNPQRTUVWXY"
 	// StringLen defines the default padding for ID generation.
 	StringLen = 14
 	// IgnoreCase defines whether ID to number conversions care about casing.
@@ -25,7 +25,7 @@ const (
 
 // Opts defines the options when constructing an ID converter.
 type Opts struct {
-	Tokens      string // Tokens to use for conversion: "01" for binary, "0123456789" for decimal, etc.
+	Alphabet    string // Tokens to use for conversion: "01" for binary, "0123456789" for decimal, etc.
 	StringLen   int    // Minimum length of an ID, which is left-padded with the first token (interpreted as zero).
 	IgnoreCase  bool   // When true, casing will be ignored during conversions.
 	GroupSize   int    // When non-zero, an ID will be split into space-delimited groups for readability (e.g. "0123 4567").
@@ -41,9 +41,9 @@ type ID struct {
 // New instantiates a converter.
 func New(o *Opts) (*ID, *er.Err) {
 	if o.IgnoreCase {
-		o.Tokens = strings.ToUpper(o.Tokens)
+		o.Alphabet = strings.ToUpper(o.Alphabet)
 	}
-	conv, err := conv.New(o.Tokens, o.ChecksumLen)
+	conv, err := conv.New(o.Alphabet, o.ChecksumLen)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ var converter *ID
 func init() {
 	var err *er.Err
 	converter, err = New(&Opts{
-		Tokens:      Tokens,
+		Alphabet:    Alphabet,
 		StringLen:   StringLen,
 		IgnoreCase:  IgnoreCase,
 		GroupSize:   GroupSize,
