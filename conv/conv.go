@@ -3,8 +3,7 @@
 package conv
 
 import (
-	"errors"
-	"fmt"
+	"github.com/KarelKubat/hrid/er"
 )
 
 // Set is the receiver that implements ToString and Touint64.
@@ -16,15 +15,15 @@ type Conv struct {
 }
 
 // New returns a new Conv. The input is e.g. for decimal conversions: "0123456789", for binary: "01", etc.
-func New(alphabet string, checksumLen int) (*Conv, error) {
-	if alphabet == "" {
-		return nil, errors.New("conv.New: conversion tokens may not be an empty string")
+func New(alphabet string, checksumLen int) (*Conv, *er.Err) {
+	if len(alphabet) < 2 {
+		return nil, er.New(er.AlphabetTooShortError, "conversion alphabet may not be an empty string")
 	}
 	tokens := []rune(alphabet)
 	tokenIndex := map[rune]int{}
 	for i, part := range tokens {
 		if _, ok := tokenIndex[part]; ok {
-			return nil, fmt.Errorf("conv.New: %v repeats in tokens %q", string(part), string(tokens))
+			return nil, er.Newf(er.TokenRepeatsError, "%v repeats in alphabet %q", string(part), string(tokens))
 		}
 		tokenIndex[part] = i
 	}
@@ -78,19 +77,19 @@ func (a *Conv) ToString(nr uint64) string {
 
 // ToNr converts a string to its numeric representation. An error occurs when the string contains runes that
 // are not in the available tokens.
-func (a *Conv) ToNr(s string) (uint64, error) {
+func (a *Conv) ToNr(s string) (uint64, *er.Err) {
 	tokens := []rune(s)
 
 	// Verify checksumming.
 	if len(tokens) <= a.checksumLen {
-		return 0, fmt.Errorf("conv.ToNr: %q doesn't accomodate %v checksum runes", s, a.checksumLen)
+		return 0, er.Newf(er.IDTooShortError, "ID %q doesn't accomodate %v checksum runes", s, a.checksumLen)
 	}
 	for i := 0; i < a.checksumLen; i++ {
 		gotCs := tokens[len(tokens)-1:][0]
 		tokens = tokens[:len(tokens)-1]
 		wantCs := a.checksum(tokens)
 		if gotCs != wantCs {
-			return 0, fmt.Errorf("conv.ToNr: checksum error at %v, expected %v", string(gotCs), string(wantCs))
+			return 0, er.Newf(er.ChecksumError, "checksum error at %v, expected %v", string(gotCs), string(wantCs))
 		}
 	}
 
@@ -101,7 +100,7 @@ func (a *Conv) ToNr(s string) (uint64, error) {
 		token := tokens[i]
 		index, ok := a.tokenIndex[token]
 		if !ok {
-			return 0, fmt.Errorf("conv.ToNr: token %v not in %q", string(token), string(a.tokens))
+			return 0, er.Newf(er.NoSuchTokenError, "token %v not in alphabet %q", string(token), string(a.tokens))
 		}
 		// Can't use math.Pow() because of the float64 conversions. The below fails at large uint64 values.
 		// out += uint64(math.Pow(float64(a.tokenLen), float64(pwr)) * float64(index))

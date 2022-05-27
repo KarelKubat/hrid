@@ -213,11 +213,70 @@ Abbreviated output:
 14 yields ID    "BGHGEAA" (with 5 checksum digits) which decodes to 14
 ```
 
-## Error Conditions
+## Errors
 
 The following errors may be raised:
 
-- *Conversion tokens may not be an empty string*: The converter needs an alphabet to work with. Triggered by e.g.: `hrid -tokens '' 1234` (`''` is an empty string).
-- *$TOKEN repeates in tokens*: Each token must occur only once in the alphabet that the converter uses. Triggered by e.g.: `hrid -tokens 'abca' 12` (the `a` repeats).
-- *$ALPHABET doesn't accomodate $LENGTH checksum runes*: When an ID is converted into a number, and when checksumming is used, then the ID must accomodate at least the number of checksum runes, plus one. Triggered by e.g.: `hrid -id AA` (there are now 2 checksum tokens, but nothing for the ID itself).
-- *checksum error at ...*: The ID doesn't 
+**Programming errors** (the converter can't work):
+- *Alphabet too short*: The converter needs at least two runes to work with, which is a base-2 number system.
+- *Token repeats*: Tokens in the conversion alphabet may not repeat. Note that this also depends on whether case insensitivity is requested: the alphabet `abcABC` is perfectly valid when case matters.
+
+**User input errors** (the converter works, but can't decode this):
+- *ID too short*: An ID must contain at least one rune that leads to a number, plus checksum runes (if checksumming applies). E.g., the ID `a` is only valid without checksumming. ID `ab` succeeds when no checksumming is requested, or when the checksum length is 1.
+- *Checksum error*: The last runes of an ID, when taken as the checksum, don't match.
+- *No such token*: An ID contains a token that's not in the conversion alphabet. E.g., given the alphabet `ABCD`, the ID `ZZZ` isn't valid.
+
+`hrid` implements error handling where besides a description, a code is present that can be inspected. The codes are in `er/er.go`. For each returned error your code may inspect the `.Code` field to see whether this is a system error, or a user error. For example:
+
+```go
+// file: test/m5/main.go
+// Example of an error checking.
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/KarelKubat/hrid/er"
+	"github.com/KarelKubat/hrid/id"
+)
+
+func main() {
+	converter, err := id.New(&id.Opts{
+		Tokens:      "0123456789ABCDEF",
+		IgnoreCase:  true,
+		ChecksumLen: 2,
+	})
+	checkError(err)
+
+	str := converter.ToString(3735928559)
+	fmt.Println("3735928559 as string is", str)
+
+	nr, err := converter.ToNr(str)
+	checkError(err)
+	fmt.Println(str, "as number is", nr)
+
+	// Let's cause a user input error.
+	_, err = converter.ToNr("ZAB5A")
+	checkError(err)
+	// Output will be similar to:
+	//   Check your user input and retry.
+	//   Detail: NoSuchTokenError: token Z not in alphabet "0123456789ABCDEF"
+}
+
+func checkError(err *er.Err) {
+	if err == nil {
+		return
+	}
+	// Find out what's wrong and issue a friendly message.
+	var cause string
+	if err.Code == er.IDTooShortError || err.Code == er.ChecksumError || err.Code == er.NoSuchTokenError {
+		cause = "Check your user input and retry."
+	} else {
+		cause = "System error, the conversion will never ever work."
+	}
+	fmt.Fprintf(os.Stderr, "%s\nDetail: %s\n", cause, err)
+
+	// At this point your program might abort, or ask to retry, or whatever.
+}
+```

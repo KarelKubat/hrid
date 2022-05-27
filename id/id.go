@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/KarelKubat/hrid/conv"
+	"github.com/KarelKubat/hrid/er"
 )
 
 const (
@@ -38,7 +39,7 @@ type ID struct {
 }
 
 // New instantiates a converter.
-func New(o *Opts) (*ID, error) {
+func New(o *Opts) (*ID, *er.Err) {
 	if o.IgnoreCase {
 		o.Tokens = strings.ToUpper(o.Tokens)
 	}
@@ -85,7 +86,7 @@ func (id *ID) ToString(n uint64) string {
 }
 
 // ToNr converts a string to a uint64.
-func (id *ID) ToNr(s string) (uint64, error) {
+func (id *ID) ToNr(s string) (uint64, *er.Err) {
 	if id.opts.IgnoreCase {
 		s = strings.ToUpper(s)
 	}
@@ -98,7 +99,7 @@ func (id *ID) ToNr(s string) (uint64, error) {
 var converter *ID
 
 func init() {
-	var err error
+	var err *er.Err
 	converter, err = New(&Opts{
 		Tokens:      Tokens,
 		StringLen:   StringLen,
@@ -118,6 +119,6 @@ func ToString(n uint64) string {
 
 // ToNr returns the uint64 representation of a string, using the defaults. An error occurs when the string contains
 // a rune that is not in the available token set.
-func ToNr(s string) (uint64, error) {
+func ToNr(s string) (uint64, *er.Err) {
 	return converter.ToNr(s)
 }

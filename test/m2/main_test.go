@@ -3,5 +3,6 @@ package main
 import "testing"
 
 func TestMain(t *testing.T) {
-	// Nothing to do here
+	// Just make sure that main() works.
+	main()
 }
