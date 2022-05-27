@@ -192,29 +192,46 @@ func TestLargeNumbers(t *testing.T) {
 }
 
 func TestChecksum(t *testing.T) {
-	for checksumRunes := 0; checksumRunes < 10; checksumRunes++ {
-		a, err := New("0123456789ABCDEF", checksumRunes)
-		if err != nil {
-			t.Fatalf("New(0-F) returned unexpected error %v", err)
-		}
-		for _, n := range []uint64{
-			123456789,
-			1234567890,
-			123456789000,
-			1234567890000,
-			12345678900000,
-			123456789000000,
-			1234567890000000,
-			12345678900000000,
-			1234567890000000000,
-		} {
+	var idLen int
+	var idZero string
+	for _, n := range []uint64{
+		123456789,
+		1234567890,
+		123456789000,
+		1234567890000,
+		12345678900000,
+		123456789000000,
+		1234567890000000,
+		12345678900000000,
+		999999999999999999,
+		1234567890000000000,
+	} {
+		for checksumRunes := 0; checksumRunes < 10; checksumRunes++ {
+			a, err := New("0123456789ABCDEF", checksumRunes)
+			if err != nil {
+				t.Fatalf("New(0-F) returned unexpected error %v", err)
+			}
 			s := a.ToString(n)
 			u, err := a.ToNr(s)
 			if err != nil {
 				t.Fatalf("ToNr(%q) = _,%q, need nil error", s, err.Error())
 			}
+
+			// Verify that decoding works.
 			if u != n {
 				t.Errorf("a.ToString(%v) = %q, but a.ToNr(%q) = %v", n, s, s, u)
+			}
+
+			// Verify that each generated ID has the expected length
+			if checksumRunes == 0 {
+				idLen = len(s)
+				idZero = s
+			} else {
+				gotLen := len(s)
+				wantLen := idLen + checksumRunes
+				if gotLen != wantLen {
+					t.Errorf("a.ToString(_) with %v checksums = %q, zerolength = %q, got length %v, want %v", checksumRunes, idZero, s, gotLen, wantLen)
+				}
 			}
 		}
 	}
