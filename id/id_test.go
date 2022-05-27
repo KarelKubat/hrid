@@ -27,7 +27,7 @@ func TestError(t *testing.T) {
 	}
 }
 
-func TestFormatting(t *testing.T) {
+func TestFormattingWithoutChecksum(t *testing.T) {
 	for _, test := range []struct {
 		groupSize  int
 		wantString string
@@ -78,10 +78,11 @@ func TestFormatting(t *testing.T) {
 		},
 	} {
 		id, err := New(&Opts{
-			Tokens:     "0123456789",
-			StringLen:  0,
-			IgnoreCase: false,
-			GroupSize:  test.groupSize,
+			Tokens:      "0123456789",
+			StringLen:   0,
+			IgnoreCase:  false,
+			GroupSize:   test.groupSize,
+			ChecksumLen: 0,
 		})
 		if err != nil {
 			t.Fatalf("New() = _,%v, need nil error", err)
