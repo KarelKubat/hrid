@@ -10,7 +10,7 @@ A typical example is an [IBAN](https://en.wikipedia.org/wiki/International_Bank_
 
 So why only digits? That makes the length unnecessarily long: base-10 yields a way longer representation than base-16. But why stop at base-16? Why not base-20 or even higher?
 
-> Why not "invent" an *alphabet* of digits that's long enough so that large numbers can be respresented using short sequences, whilst the alphabet is designed to avoid typos? How about these digits: `0123456789ABCDEFGHKLMNPQRSTUVWXY`. This is a base-32 notation which attempts to avoid typos. There is no `O` because it looks too much like a zero, there is no `I` because it looks too much like a one, etc.. And there are only uppercase letters, so humans can enter things using whatever casing they like - the computer can compensate.
+> Why not "invent" an *alphabet* of digits that's long enough so that large numbers can be respresented using short sequences, whilst the alphabet is designed to avoid typos? How about these digits: `0123456789ABCDEFGHKLMNPQRTUVWXY`. This is a base-30-something notation which attempts to avoid typos. There is no `O` because it looks too much like a zero, there is no `I` because it looks too much like a one, etc.. And there are only uppercase letters, so humans can enter things using whatever casing they like - the computer can compensate.
 
 ## Overview
 
@@ -19,30 +19,32 @@ This is a Go package that you can include in your own code to generate IDs in st
 ```shell
 # Convert a number to an ID. The generated output is space-separated into sets to improve readability.
 $ hrid 9999999999999999999
-8NHS 30K4 XFYY YAM
+CNHM7 4XCQY 4QH24
 
 # Reverse, the ID is interpreted without regard to casing and spaces.
-$ hrid -id '8nh s30 k4xf yyy AM'
+$ hrid -id 'cn hm 74 xc qy 4q h24'
 9999999999999999999
 ```
 
 Out-of-the-box defaults are applied that are meant to be as sane as possible for humans:
 
-- The "alphabet" for the conversion is `0123456789ABCDEFGHKLMNPQRSTUVWXY`: digits and uppercase letters. This default tries to avoid tokens that are similar to one another: there is no I (looks as a 1), there is no O (looks as a 0), etc.
+- The "alphabet" for the conversion consists of digits and uppercase letters. This default tries to avoid tokens that are similar to one another: there is no I (looks as a 1), there is no O (looks as a 0), etc. See `hrid/id/id.go` for the actual value. (You can always supply a different alphabet for your conversions.)
 - Each generated ID is appended with two checksum runes.
-- Generated IDs (strings) are padded to a length of 14 runes, which plays well with the alphabet: you don't need more tokens to represent a `uint64`. With the two checksum runes this yields 16 runes (nicely separated into four groups of four).
+- Generated IDs (strings) are padded to a length of 13 runes, which plays well with the alphabet: you don't need more tokens to represent a `uint64`. With the two checksum runes this yields 15 runes (nicely separated into three groups of five).
 - Casing is ignored when converting an ID to a number; an `A` and an `a` are treated the same. This also plays well with the default alphabet (but would have to be turned off if you want to use an alphabet that has upper and lower case tokens).
-- Generated IDs are split into groups of four runes for better readability.
+- Generated IDs are split into groups of five for better readability.
 
 All these settings can be programmatically overruled in the package `hrid/id`, or by the flags that `hrid` accepts (try `hrid -help`). As a silly example, here's a binary converter using the standard 0 and 1, or using smileys:
 
 ```shell
 $ hrid -tokens=01  12345678
-1011 1100 0110 0001 0100 1110 00
+10111 10001 10000 10100 11100 0
 
 $ hrid -tokens=🥵😀  12345678
-😀🥵😀😀 😀😀🥵🥵 🥵😀😀🥵 🥵🥵🥵😀 🥵😀🥵🥵 😀😀😀🥵 🥵🥵
+😀🥵😀😀😀 😀🥵🥵🥵😀 😀🥵🥵🥵🥵 😀🥵😀🥵🥵 😀😀😀🥵🥵 🥵
 ```
+
+In this example the default ID length of 13 (plus 2 for the checksum, making it 15) cannot be met. The binary representation needs more digits - here 26. `hrid` won't shorten an ID, but it may pad it up to the desired length.
 
 The alphabet is interpreted as follows:
 
@@ -117,7 +119,7 @@ func main() {
 
 ## Package hrid/conv
 
-This package is respoonsible for the actual conversion. It can be directly called from your program if you don't care about padding, grouping or case-insensitivity in the string representations.
+This package is respoonsible for the actual conversions (with checksums, if so requested). It can be directly called from your program if you don't care about padding, grouping or case-insensitivity in the string representations.
 
 ### Synopsis
 
@@ -154,7 +156,7 @@ The checksum over an ID is computed and postifixed to the ID as follows:
 - The checksum starts at zero.
 - For each rune in the ID, its position in the alphabet (i.e., its numeric value) is added to the checksum, and then the checksum is resized to "fit" the base of the alphabet using a modulo operation.
 - The resulting checksum rune is added to the ID.
-- When the checksum length indicates that more than 1 checksum runes should be added, then the process repeats. I.e., the second checksum rune that is added represents the ID *and* the first checksum rune.
+- When the checksum length indicates that more than 1 checksum runes should be added, then the process repeats. I.e., the second checksum rune that is added represents the ID *and* the first checksum rune, the third checksum rune represents the ID plus the two checksum runes, etc..
 
 Assuming that the alphabet is `ABCDEFGH`, then an `A` is the value zero, a `B` is the value one etc. (This is in fact a base-8 conversion, but with funky digits `A-H` instead of `0-7`.) When converting the number 14 to an ID, with 2 checksum runes, the following applies:
 - 14 is represented as `BG` (check your octal converter, 14 decimal is 016 octal).
@@ -165,7 +167,7 @@ Assuming that the alphabet is `ABCDEFGH`, then an `A` is the value zero, a `B` i
 An example is `test/m4/main.go`:
 
 ```go
-/ file: test/m4/main.go
+// file: test/m4/main.go
 package main
 
 import (
