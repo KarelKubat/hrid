@@ -31,6 +31,17 @@ func main() {
 	// Output will be similar to:
 	//   Check your user input and retry.
 	//   Detail: NoSuchTokenError: token Z not in alphabet "0123456789ABCDEF"
+
+	// Let's cause a broken converter that just can't work.
+	converter, err = id.New(&id.Opts{
+		Alphabet:    "0123456789ABCDE0F", // 0 repeats
+		IgnoreCase:  true,
+		ChecksumLen: 2,
+	})
+	checkError(err)
+	// Output will be similar to:
+	//   System error, the conversion will never ever work.
+	//   Detail: TokenRepeatsError: 0 repeats in alphabet "0123456789ABCDE0F"
 }
 
 func checkError(err *er.Err) {
