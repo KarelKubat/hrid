@@ -18,7 +18,7 @@ const (
 	// IgnoreCase defines whether ID to number conversions care about casing.
 	IgnoreCase = true
 	// GroupSize defines the length of groups in generated IDs, for better readability.
-	GroupSize = 5
+	GroupSize = 3
 	// Default number of checksum runes to add to a generated ID.
 	ChecksumLen = 2
 )

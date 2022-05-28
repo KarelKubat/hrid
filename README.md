@@ -21,7 +21,7 @@ This is a Go package that you can include in your own code to generate IDs in st
 ```shell
 # Convert a number to an ID. The generated output is space-separated into sets to improve readability.
 $ hrid 9999999999999999999
-CNHM7 4XCQY 4QH24
+CNH M74 XCQ Y4Q H24
 
 # Reverse, the ID is interpreted without regard to casing and spaces.
 $ hrid -id 'cn hm 74 xc qy 4q h24'
@@ -32,18 +32,18 @@ Out-of-the-box defaults are applied that are meant to be as sane as possible for
 
 - The "alphabet" for the conversion consists of digits and uppercase letters. This default tries to avoid tokens that are similar to one another: there is no I (looks as a 1), there is no O (looks as a 0), etc. See `id/id.go` for the actual value. (You can always supply a different alphabet for your conversions.)
 - Each generated ID is appended with two checksum runes.
-- Generated IDs (strings) are padded to a length of 13 runes, which plays well with the alphabet: you don't need more tokens to represent a `uint64`. With the two checksum runes this yields 15 runes (nicely separated into three groups of five).
+- Generated IDs (strings) are padded to a length of 13 runes, which plays well with the alphabet: you don't need more tokens to represent a `uint64`. With the two checksum runes this yields 15 runes (nicely separated into equal-length groups).
 - Casing is ignored when converting an ID to a number; an `A` and an `a` are treated the same. This also plays well with the default alphabet (but would have to be turned off if you want to use an alphabet that has upper and lower case tokens).
 - Generated IDs are split into groups of five for better readability.
 
 All these settings can be programmatically overruled in the package `hrid/id`, or by the flags that `hrid` accepts (try `hrid -help`). As a silly example, here's a binary converter using the standard 0 and 1, or using smileys:
 
 ```shell
-$ hrid -alphabet=01  12345678
-10111 10001 10000 10100 11100 0
+$ hrid -alphabet=01 -groupsize=4 12345678
+1011 1100 0110 0001 0100 1110 00
 
-$ hrid -alphabet=🥵😀  12345678
-😀🥵😀😀😀 😀🥵🥵🥵😀 😀🥵🥵🥵🥵 😀🥵😀🥵🥵 😀😀😀🥵🥵 🥵
+$ hrid -alphabet=🥵😀 -groupsize=4 12345678
+😀🥵😀😀 😀😀🥵🥵 🥵😀😀🥵 🥵🥵🥵😀 🥵😀🥵🥵 😀😀😀🥵 🥵🥵
 ```
 
 In this example the default ID length of 13 (plus 2 for the checksum, making it 15) cannot be met. The binary representation needs more digits - here 26. `hrid` won't shorten an ID, but it may pad it up to the desired length.
@@ -231,7 +231,7 @@ The following errors may be raised:
 `hrid` implements error handling where besides a description, a code is present that can be inspected. The codes are in `er/er.go`. For each returned error your code may inspect the `.Code` field to see whether this is a system error, or a user error. For example:
 
 ```go
-// file: test/m5/main.go
+/// file: test/m5/main.go
 // Example of an error checking.
 package main
 
@@ -264,6 +264,17 @@ func main() {
 	// Output will be similar to:
 	//   Check your user input and retry.
 	//   Detail: NoSuchTokenError: token Z not in alphabet "0123456789ABCDEF"
+
+	// Let's cause a broken converter that just can't work.
+	converter, err = id.New(&id.Opts{
+		Alphabet:    "0123456789ABCDE0F", // 0 repeats
+		IgnoreCase:  true,
+		ChecksumLen: 2,
+	})
+	checkError(err)
+	// Output will be similar to:
+	//   System error, the conversion will never ever work.
+	//   Detail: TokenRepeatsError: 0 repeats in alphabet "0123456789ABCDE0F"
 }
 
 func checkError(err *er.Err) {
