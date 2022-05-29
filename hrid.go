@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/KarelKubat/flagnames"
 	"github.com/KarelKubat/hrid/id"
 )
 
@@ -16,8 +17,10 @@ This is hrid, the Human Readable ID converter.
 Usage:
   hrid [FLAGS] NUMBER - generates a human readable ID and prints it on stdout
   hrid [FLAGS] -id ID - re-interprets the ID as a number and prints it on stdout
-Try hrid -help for an overview of all flags. 
-`
+
+The flags can be abbreviated: -a for -alphabet, -l for -length etc.
+Supported flags:
+  `
 )
 
 var (
@@ -32,6 +35,12 @@ var (
 )
 
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, usage)
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	flagnames.Patch()
 	flag.Parse()
 	hrid(flag.Args())
 }
@@ -39,8 +48,7 @@ func main() {
 // hrid is a helper function that can be called from the unit test.
 func hrid(args []string) {
 	if len(args) == 0 {
-		fmt.Fprint(os.Stderr, usage)
-		os.Exit(1)
+		flag.Usage()
 	}
 	opts := &id.Opts{
 		Alphabet:    *alphabetFlag,
