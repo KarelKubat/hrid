@@ -206,7 +206,7 @@ func TestChecksum(t *testing.T) {
 		999999999999999999,
 		1234567890000000000,
 	} {
-		for checksumRunes := 0; checksumRunes < 10; checksumRunes++ {
+		for checksumRunes := uint(0); checksumRunes < 10; checksumRunes++ {
 			a, err := New("0123456789ABCDEF", checksumRunes)
 			if err != nil {
 				t.Fatalf("New(0-F) returned unexpected error %v", err)
@@ -228,7 +228,7 @@ func TestChecksum(t *testing.T) {
 				idZero = s
 			} else {
 				gotLen := len(s)
-				wantLen := idLen + checksumRunes
+				wantLen := idLen + int(checksumRunes)
 				if gotLen != wantLen {
 					t.Errorf("a.ToString(_) with %v checksums = %q, zerolength = %q, got length %v, want %v", checksumRunes, idZero, s, gotLen, wantLen)
 				}

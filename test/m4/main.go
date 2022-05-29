@@ -13,7 +13,7 @@ const (
 )
 
 func main() {
-	for checksumLen := 0; checksumLen < 8; checksumLen++ {
+	for checksumLen := uint(0); checksumLen < 8; checksumLen++ {
 		converter, err := conv.New("ABCDEFGH", checksumLen) // Base-8 conversion, but using funky digits
 		if err != nil {
 			log.Fatal(err)

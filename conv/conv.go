@@ -9,15 +9,15 @@ import (
 // Set is the receiver that implements ToString and Touint64.
 type Conv struct {
 	alphabet    []rune
-	checksumLen int
+	checksumLen uint
 	tokenIndex  map[rune]int
 	tokenLen    int
 }
 
 // New returns a new Conv. The input is e.g. for decimal conversions: "0123456789", for binary: "01", etc.
-func New(alphabet string, checksumLen int) (*Conv, *er.Err) {
+func New(alphabet string, checksumLen uint) (*Conv, *er.Err) {
 	if len(alphabet) < 2 {
-		return nil, er.New(er.AlphabetTooShortError, "conversion alphabet may not be an empty string")
+		return nil, er.New(er.AlphabetTooShortError, "conversion alphabet must have at least length 2")
 	}
 	tokens := []rune(alphabet)
 	tokenIndex := map[rune]int{}
@@ -64,7 +64,7 @@ func (a *Conv) ToRunes(nr uint64) []rune {
 	}
 
 	// Add checksumming of so requested.
-	for i := 0; i < a.checksumLen; i++ {
+	for i := uint(0); i < a.checksumLen; i++ {
 		runes = append(runes, a.checksum(runes))
 	}
 	return runes
@@ -81,10 +81,10 @@ func (a *Conv) ToNr(s string) (uint64, *er.Err) {
 	tokens := []rune(s)
 
 	// Verify checksumming.
-	if len(tokens) <= a.checksumLen {
+	if uint(len(tokens)) <= a.checksumLen {
 		return 0, er.Newf(er.IDTooShortError, "ID %q doesn't accomodate %v checksum runes", s, a.checksumLen)
 	}
-	for i := 0; i < a.checksumLen; i++ {
+	for i := uint(0); i < a.checksumLen; i++ {
 		gotCs := tokens[len(tokens)-1:][0]
 		tokens = tokens[:len(tokens)-1]
 		wantCs := a.checksum(tokens)

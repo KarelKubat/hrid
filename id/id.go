@@ -43,7 +43,7 @@ func New(o *Opts) (*ID, *er.Err) {
 	if o.IgnoreCase {
 		o.Alphabet = strings.ToUpper(o.Alphabet)
 	}
-	conv, err := conv.New(o.Alphabet, o.ChecksumLen)
+	conv, err := conv.New(o.Alphabet, uint(o.ChecksumLen))
 	if err != nil {
 		return nil, err
 	}
