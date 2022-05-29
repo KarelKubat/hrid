@@ -20,7 +20,7 @@ Usage:
 
 The flags can be abbreviated: -a for -alphabet, -l for -length etc.
 Supported flags:
-  `
+`
 )
 
 var (
