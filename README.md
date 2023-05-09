@@ -1,6 +1,14 @@
 # hrid: Human Readable IDs
 
 <!-- toc -->
+- [But why?](#but-why)
+- [Overview](#overview)
+- [Package hrid/id](#package-hridid)
+  - [Synopsis](#synopsis)
+- [Package hrid/conv](#package-hridconv)
+  - [Synopsis](#synopsis-1)
+  - [Checksumming](#checksumming)
+- [Errors](#errors)
 <!-- /toc -->
 
 ## But why?
