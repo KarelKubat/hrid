@@ -1,5 +1,8 @@
 # hrid: Human Readable IDs
 
+<!-- toc -->
+<!-- /toc -->
+
 ## But why?
 
 ![But why?](ButWhy.gif)
