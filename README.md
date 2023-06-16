@@ -4,9 +4,9 @@
 - [But why?](#but-why)
 - [Overview](#overview)
 - [Package hrid/id](#package-hridid)
-  - [Synopsis](#synopsis)
+  - [Synopsis for <code>hrid/id</code>](#synopsis-for-hridid)
 - [Package hrid/conv](#package-hridconv)
-  - [Synopsis](#synopsis-1)
+  - [Synopsis for <code>hrid/conv</code>](#synopsis-for-hridconv)
   - [Checksumming](#checksumming)
 - [Errors](#errors)
 <!-- /toc -->
