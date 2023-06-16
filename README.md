@@ -69,7 +69,7 @@ The alphabet is interpreted as follows:
 
 Package `hrid/id` exports global functions (that use the default alphabet, grouping etc.). Also there is a `New()` constructor to instantiate a converter using different values. This package calls `hrid/conv` for the actual conversions, and then applies padding and formatting and takes care of case-insensitivy (if so requested).
 
-### Synopsis
+### Synopsis for `hrid/id`
 
 ```go
 // file: test/m1/main.go
@@ -132,9 +132,9 @@ func main() {
 
 ## Package hrid/conv
 
-This package is respoonsible for the actual conversions (with checksums, if so requested). It can be directly called from your program if you don't care about padding, grouping or case-insensitivity in the string representations.
+This package is responsible for the actual conversions (with checksums, if so requested). It can be directly called from your program if you don't care about padding, grouping or case-insensitivity in the string representations.
 
-### Synopsis
+### Synopsis for `hrid/conv`
 
 ```go
 // file: test/m3/main.go
@@ -166,12 +166,14 @@ func main() {
 ### Checksumming
 
 The checksum over an ID is computed and postifixed to the ID as follows:
+
 - The checksum starts at zero.
 - For each rune in the ID, its position in the alphabet (i.e., its numeric value) is added to the checksum, and then the checksum is resized to "fit" the base of the alphabet using a modulo operation.
 - The resulting checksum rune is added to the ID.
 - When the checksum length indicates that more than 1 checksum runes should be added, then the process repeats. I.e., the second checksum rune that is added represents the ID *and* the first checksum rune, the third checksum rune represents the ID plus the two checksum runes, etc..
 
 Assuming that the alphabet is `ABCDEFGH`, then an `A` is the value zero, a `B` is the value one etc. (This is in fact a base-8 conversion, but with funky digits `A-H` instead of `0-7`.) When converting the number 14 to an ID, with 2 checksum runes, the following applies:
+
 - 14 is represented as `BG` (check your octal converter, 14 decimal is 016 octal).
 - The first checksum rune is `H`, because `B`=1 plus `G`=6 is 7, which still fits the octal system.
 - The second checksum rune is `G`, because `B`=1 plus `G`=6 plus `H`=7 is 14, and 17%8=6, or `G`.
@@ -231,10 +233,12 @@ Abbreviated output:
 The following errors may be raised:
 
 **Programming errors** (the converter can't work):
+
 - *Alphabet too short*: The converter needs at least two runes to work with, which is a base-2 number system.
 - *Token repeats*: Tokens in the conversion alphabet may not repeat. Note that this also depends on whether case insensitivity is requested: the alphabet `abcABC` is perfectly valid when case matters.
 
 **User input errors** (the converter works, but can't decode this):
+
 - *ID too short*: An ID must contain at least one rune that leads to a number, plus checksum runes (if checksumming applies). E.g., the ID `a` is only valid without checksumming. ID `ab` succeeds when no checksumming is requested, or when the checksum length is 1.
 - *Checksum error*: The last runes of an ID, when taken as the checksum, don't match.
 - *No such token*: An ID contains a token that's not in the conversion alphabet. E.g., given the alphabet `ABCD`, the ID `ZZZ` isn't valid.
